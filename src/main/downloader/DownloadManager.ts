@@ -35,7 +35,7 @@ export class DownloadManager extends EventEmitter {
     super()
     const settings = settingsRepo.getAll()
     this.queue = new PQueue({ concurrency: settings.maxConcurrentDownloads })
-    this.ytdlp = new YtDlpWrapper(settings.ytdlpPath || YtDlpWrapper.getBundledPath())
+    this.ytdlp = new YtDlpWrapper(YtDlpWrapper.resolveBinaryPath(settings.ytdlpPath))
   }
 
   initialize(): void {
@@ -307,7 +307,7 @@ export class DownloadManager extends EventEmitter {
 
   updateSettings(settings: AppSettings): void {
     this.queue.concurrency = settings.maxConcurrentDownloads
-    this.ytdlp.setBinaryPath(settings.ytdlpPath || YtDlpWrapper.getBundledPath())
+    this.ytdlp.setBinaryPath(YtDlpWrapper.resolveBinaryPath(settings.ytdlpPath))
   }
 
   private emitProgress(id: string): void {

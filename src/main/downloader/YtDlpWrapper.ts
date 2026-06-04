@@ -1,6 +1,7 @@
 import YTDlpWrap from 'yt-dlp-wrap'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { execSync } from 'child_process'
 import { app } from 'electron'
 import type { YtDlpInfo } from '../../shared/types'
 import { createContextLogger } from '../utils/logger'
@@ -236,13 +237,45 @@ export class YtDlpWrapper {
     log.info('yt-dlp updated', { path: binaryPath })
   }
 
+  // Resolve the yt-dlp binary path. Call sites should prefer resolveBinaryPath()
+  // over getBundledPath() directly.
   static getBundledPath(): string {
     const platform = process.platform
     const binaryName = platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp'
-    const resourcesPath = app.isPackaged
-      ? join(process.resourcesPath, 'bin')
-      : join(app.getAppPath(), 'resources', 'bin', platform === 'win32' ? 'win' : platform === 'darwin' ? 'mac' : 'linux')
-    const bundled = join(resourcesPath, binaryName)
-    return existsSync(bundled) ? bundled : 'yt-dlp'
+
+    // 1. Bundled binary shipped with the app
+    try {
+      const resourcesPath = app.isPackaged
+        ? join(process.resourcesPath, 'bin')
+        : join(app.getAppPath(), 'resources', 'bin',
+            platform === 'win32' ? 'win' : platform === 'darwin' ? 'mac' : 'linux')
+      const bundled = join(resourcesPath, binaryName)
+      if (existsSync(bundled)) return bundled
+    } catch {}
+
+    // 2. Resolve from system PATH.
+    // On Windows, run through cmd.exe so it searches the full user PATH
+    // (desktop-launched Electron often inherits only the system PATH, missing
+    // locations added by winget / pip / scoop that live in the user PATH).
+    try {
+      const cmd = platform === 'win32' ? 'cmd /c where yt-dlp' : 'which yt-dlp'
+      const result = execSync(cmd, { encoding: 'utf8', timeout: 3000 })
+        .trim().split('\n')[0].trim()
+      if (result && existsSync(result)) return result
+    } catch {}
+
+    // 3. Last resort — let the OS try at spawn time
+    return binaryName
+  }
+
+  // Returns an absolute path to yt-dlp. If `configured` is the default placeholder
+  // name ('yt-dlp' / 'yt-dlp.exe') rather than an explicit path, auto-resolve it.
+  static resolveBinaryPath(configured: string): string {
+    const defaults = new Set(['yt-dlp', 'yt-dlp.exe', ''])
+    if (configured && !defaults.has(configured)) {
+      // User set an explicit path — respect it as-is
+      return configured
+    }
+    return YtDlpWrapper.getBundledPath()
   }
 }

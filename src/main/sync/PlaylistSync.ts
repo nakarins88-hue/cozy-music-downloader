@@ -20,7 +20,7 @@ export class PlaylistSync {
     private settingsRepo: SettingsRepository
   ) {
     const settings = settingsRepo.getAll()
-    this.ytdlp = new YtDlpWrapper(settings.ytdlpPath || YtDlpWrapper.getBundledPath())
+    this.ytdlp = new YtDlpWrapper(YtDlpWrapper.resolveBinaryPath(settings.ytdlpPath))
   }
 
   startAutoSync(): void {
