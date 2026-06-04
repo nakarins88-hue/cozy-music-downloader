@@ -185,7 +185,7 @@ export function DownloadsPage() {
       if (!urls.length) return
       setIsAdding(true)
       try {
-        await addBatch(urls)
+        await addBatch(urls, format, quality)
         setBatchText('')
         addToast({ type: 'success', title: `Added ${urls.length} downloads` })
       } catch (err) {
@@ -197,7 +197,7 @@ export function DownloadsPage() {
       if (!url.trim()) return
       setIsAdding(true)
       try {
-        await addDownload(url.trim())
+        await addDownload(url.trim(), format, quality)
         setUrl('')
         addToast({ type: 'success', title: 'Download added to queue' })
       } catch (err) {

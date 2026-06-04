@@ -9,8 +9,8 @@ interface DownloadState {
   upsertItem: (item: DownloadItem) => void
   removeItem: (id: string) => void
   loadQueue: () => Promise<void>
-  addDownload: (url: string) => Promise<void>
-  addBatch: (urls: string[]) => Promise<void>
+  addDownload: (url: string, format?: string, quality?: string) => Promise<void>
+  addBatch: (urls: string[], format?: string, quality?: string) => Promise<void>
   pause: (id: string) => Promise<void>
   resume: (id: string) => Promise<void>
   cancel: (id: string) => Promise<void>
@@ -48,13 +48,18 @@ export const useDownloadStore = create<DownloadState>((set, get) => ({
     }
   },
 
-  addDownload: async (url) => {
-    const item = await window.api.download.start(url)
+  addDownload: async (url, format, quality) => {
+    const options = format || quality ? { format, quality } : undefined
+    const item = await window.api.download.start(url, options)
     get().upsertItem(item)
   },
 
-  addBatch: async (urls) => {
-    const items = await window.api.download.batch({ urls })
+  addBatch: async (urls, format, quality) => {
+    const items = await window.api.download.batch({
+      urls,
+      ...(format && { format: format as import('../../../shared/types').AudioFormat }),
+      ...(quality && { quality: quality as import('../../../shared/types').AudioQuality })
+    })
     for (const item of items) get().upsertItem(item)
   },
 

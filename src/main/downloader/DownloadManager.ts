@@ -107,8 +107,6 @@ export class DownloadManager extends EventEmitter {
       this.emitProgress(id)
 
       const info = await this.getInfo(id, item.url)
-      if (!info) return
-
       await this.executeDownload(id, item, info, controller.signal)
     } catch (err) {
       if (!controller.signal.aborted) {

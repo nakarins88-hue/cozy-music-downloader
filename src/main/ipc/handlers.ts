@@ -55,9 +55,10 @@ export function registerIpcHandlers(
   })
 
   // Download handlers
-  handle('download:start', (url: unknown) =>
-    downloadManager.addDownload(url as string)
-  )
+  handle('download:start', (url: unknown, options: unknown) => {
+    const opts = options as { format?: string; quality?: string } | undefined
+    return downloadManager.addDownload(url as string, opts)
+  })
 
   handle('download:batch', (request: unknown) =>
     downloadManager.addBatch(request as BatchDownloadRequest)

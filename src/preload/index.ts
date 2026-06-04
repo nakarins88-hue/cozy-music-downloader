@@ -19,7 +19,8 @@ async function invoke<T>(channel: string, ...args: unknown[]): Promise<T> {
 const api = {
   // Download
   download: {
-    start: (url: string) => invoke<DownloadItem>('download:start', url),
+    start: (url: string, options?: { format?: string; quality?: string }) =>
+      invoke<DownloadItem>('download:start', url, options),
     batch: (req: BatchDownloadRequest) => invoke<DownloadItem[]>('download:batch', req),
     pause: (id: string) => invoke<void>('download:pause', id),
     resume: (id: string) => invoke<void>('download:resume', id),
